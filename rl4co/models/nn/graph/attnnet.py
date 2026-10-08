@@ -272,7 +272,8 @@ class KNNLocalAttentionLayer(nn.Module):
 
 class HeterogeneousAttentionLayer(nn.Module):
     """
-    Heterogeneous Attention Layer with normalization and feed-forward layer.
+    Constraint-Aware Heterogeneous Attention (CAHA) layer: heterogeneous
+    attention with normalization and a feed-forward (optionally MoE) sub-layer.
     """
     def __init__(
         self,
@@ -325,7 +326,7 @@ class GraphAttentionNetwork(nn.Module):
         num_layers: number of stacked attention blocks
         normalization: normalization strategy inside each block
         feedforward_hidden: hidden dimension of the FFN sub-layer
-        attention_type: 'mha', 'ceca', 'prefix_mha', or 'knn_local'
+        attention_type: 'heterogeneous' (CAHA, default in TAHA), 'mha', 'ceca', 'prefix_mha', or 'knn_local'
         ceca_channels: number of channels for CECA (required when attention_type='ceca')
         knn_k: fixed number of neighbors for KNN attention (optional when ratio provided)
         knn_ratio: ratio relative to sequence length to derive neighbor count

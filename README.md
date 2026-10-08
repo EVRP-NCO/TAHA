@@ -1,21 +1,35 @@
 # TAHA
 
-Official implementation of **TAHA**, a unified neural combinatorial optimization
-model for vehicle routing problems with heterogeneous constraints
-(energy consumption, time windows, backhaul, nonlinear / partial charging).
+Official implementation of **TAHA: Task-Adaptive Heterogeneous Attention for
+Multi-Task Electric Vehicle Routing Problems (MTEVRP)**.
 
-TAHA is built on a POMO-style multi-start autoregressive policy and combines:
+TAHA disentangles static geometry from dynamic feasibility through a stratified
+processing pipeline built from four synergistic components:
 
-| Component | Location | Description |
+| Component | Location in this repository | Role |
 | --- | --- | --- |
-| **Unified VRP environment** | `rl4co/envs/routing/unified_vrp/` | Trains on a mixture of VRP variants. Each constraint (energy, time windows, backhaul, nonlinear charging, partial charging) is activated independently with Bernoulli sampling, so a single model generalizes across the whole variant family. |
-| **Switch-LoRA MoE encoder** | `rl4co/models/nn/moe.py`, `rl4co/models/nn/graph/attnnet.py` | Loss-free Switch routing over lightweight LoRA experts on top of a shared dense base FFN (4 experts in the default config). |
-| **SA adapter** | `rl4co/models/zoo/am/adapter.py` | A middle layer between encoder and decoder that injects route context and energy / constraint feasibility features into node embeddings (enabled by default, `use_adapter=True`). |
-| **Heterogeneous attention** | `rl4co/models/nn/graph/attnnet.py` | Constraint-aware graph attention (`attention_type="heterogeneous"`), fusing node, constraint and distance embeddings. Alternative attention types (`mha`, `ceca`, `prefix_mha`, `knn_local`) are available in the same module. |
+| **Constraint-Aware Heterogeneous Attention (CAHA)** | `rl4co/models/nn/graph/attnnet.py`, `rl4co/models/nn/attention.py` | Foundational structural disentanglement: explicitly separates invariant routing semantics from feasibility-driven interactions dictated by EVRP-specific constraints (depot / station / customer heterogeneity). |
+| **Decoupled-Synergistic MoE (DS MoE)** | `rl4co/models/nn/moe.py` | Decomposes representation learning into a shared backbone for universal geometric invariances and a sparse bank of low-rank (LoRA) experts for task-specific policy adaptations; a loss-free stochastic switch router performs Top-1 expert selection. |
+| **State-Aware Adapter (SAA)** | `rl4co/models/zoo/am/adapter.py` | Dynamic interface between encoder and decoder: harmonizes static problem representations with real-time execution states by injecting feasibility signals (energy margins, constraint attributes) into the decoding process. |
+| **Constraint-Modulated Decoder** | `rl4co/models/zoo/am/decoder.py` | Harmonizes node desirability with operational viability in logit space: the SAA energy score is injected as a differentiable logit-level bias (soft modulation) on top of the environment feasibility mask. |
 
-Training follows the POMO recipe: 8 dihedral augmentations (at validation / test),
-multi-start decoding, a shared top-k baseline, and multi-task reward normalization
-for the mixed constraint variants.
+## Training regime
+
+TAHA is trained with a unified multi-task regime that combines:
+
+- **Stochastic task composition** — each instance activates a random combination
+  of operational constraints (energy, time windows, backhaul, nonlinear charging,
+  partial charging) via independent Bernoulli(0.5) sampling
+  (`rl4co/envs/routing/unified_vrp/`).
+- **Multi-start policy optimization** with 8 dihedral augmentations at
+  validation / test time and a shared top-k baseline (POMO-style;
+  `rl4co/models/zoo/pomo/`).
+- **Task-stratified reward normalization** (multi-task norm) to stabilize policy
+  gradients across variants with different reward scales
+  (`configs/experiment/routing/taha.yaml`).
+
+Evaluated on nine MTEVRP variants: `CEVRP`, `EVRPTW`, `EVRPTWNC`, `EVRPTWPC`,
+`EVRPTWNCPC`, `EVRPBTW`, `EVRPBTWNC`, `EVRPBTWPC`, `EVRPBTWNCPC`.
 
 ## Repository layout
 
@@ -24,16 +38,17 @@ TAHA/
 ├── run.py                      # entry point: training / testing
 ├── configs/
 │   ├── main.yaml               # global defaults (Hydra)
-│   ├── experiment/routing/pomo.yaml   # TAHA training configuration
-│   ├── model/pomo.yaml         # POMO model hyperparameters
-│   └── env/unified_vrp.yaml    # unified VRP environment
+│   ├── experiment/routing/taha.yaml   # TAHA training configuration
+│   ├── model/pomo.yaml         # backbone model hyperparameters
+│   └── env/unified_vrp.yaml    # MTEVRP environment
 └── rl4co/                      # model & environment library
-    ├── envs/routing/unified_vrp/     # unified VRP env + generator
+    ├── envs/routing/unified_vrp/     # MTEVRP env + generator (stochastic task composition)
     ├── envs/routing/evrp|evrptw/     # base EVRP / EVRPTW environments
-    ├── models/zoo/pomo/              # POMO training loop (multi-start, top-k baseline)
-    ├── models/zoo/am/                # attention policy, encoder, decoder, SA adapter
-    ├── models/nn/                    # attention, transformer, MoE / LoRA layers
-    ├── models/rl/                    # REINFORCE baselines (Lightning module)
+    ├── models/nn/graph/attnnet.py    # CAHA encoder network
+    ├── models/nn/moe.py              # DS MoE (LoRA experts + stochastic switch router)
+    ├── models/zoo/am/adapter.py      # SAA
+    ├── models/zoo/am/decoder.py      # constraint-modulated decoder
+    ├── models/zoo/pomo/              # POMO-style multi-start training loop
     ├── data/                         # instance generation and augmentation utilities
     ├── tasks/train.py                # Hydra training / testing task
     └── utils/                        # trainer, callbacks, decoding helpers
@@ -76,11 +91,14 @@ Checkpoints and logs are written to `logs/train/runs/<timestamp>/`.
 ### Ablation switches
 
 ```bash
-# disable the MoE experts (falls back to a dense feed-forward layer)
+# w/o DS MoE: disable the experts (falls back to a dense feed-forward layer)
 python run.py model.policy_kwargs.moe_kwargs.encoder=null
 
-# disable the SA adapter
+# w/o SAA: disable the state-aware adapter
 python run.py model.policy_kwargs.use_adapter=False
+
+# w/o CAHA: switch the heterogeneous attention to plain multi-head attention
+# (set attention_type="mha" in rl4co/models/zoo/am/encoder.py)
 ```
 
 ## Evaluation

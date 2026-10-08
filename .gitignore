@@ -14,6 +14,9 @@ __pycache__/
 /data/
 /plots/
 
+# Paper drafts / PDF exports
+*.pdf
+
 # Editors / OS
 .vscode/
 .idea/

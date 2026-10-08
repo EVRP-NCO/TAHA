@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 
 class UnifiedVRPGenerator(EVRPTWGenerator):
     """
-    Unified VRP Generator using MBT-style Bernoulli sampling.
+    Unified VRP (MTEVRP) generator using stochastic task composition:
+    MBT-style Bernoulli sampling.
     
     Each constraint ν ∈ V is independently activated using:
         1_ν = 1 if rand < p_ν  else 0
-    Default: p_ν = 1/2 (uniform sampling across variants)
+    Default: p_ν = 1/2 (maximum-entropy sampling across variants)
 
     Supported constraints:
     - energy

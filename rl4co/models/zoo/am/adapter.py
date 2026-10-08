@@ -8,7 +8,9 @@ from rl4co.envs import RL4COEnvBase
 
 
 class Adapter(nn.Module):
-    """Independent middle layer that sits between encoder and decoder.
+    """State-Aware Adapter (SAA).
+
+    Independent middle layer that sits between encoder and decoder.
     
     This adapter enhances node embeddings by injecting:
     1. Route context from current trajectory

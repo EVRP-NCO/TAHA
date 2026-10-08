@@ -72,7 +72,7 @@ class AttentionModelEncoder(ConstructiveEncoder):
                 num_layers=num_layers,
                 normalization=normalization, 
                 feedforward_hidden=feedforward_hidden,
-                attention_type="heterogeneous",#mha/heterogeneous  # 切换到MHA进行对比
+                attention_type="heterogeneous",  # CAHA (paper); switch to "mha" for the w/o CAHA ablation
                 sdpa_fn=sdpa_fn,
                 moe_kwargs=moe_kwargs
             )

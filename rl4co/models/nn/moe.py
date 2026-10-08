@@ -79,7 +79,7 @@ class RobustSwitchRouter(nn.Module):
 
 class MoE(nn.Module):
     """
-    Switch-LoRA Architecture (Loss-Free).
+    Decoupled-Synergistic MoE (DS MoE) — Switch-LoRA architecture (loss-free).
     
     Logic: 
     y = Base(x) + Switch(LoRA_1...LoRA_N)(x)

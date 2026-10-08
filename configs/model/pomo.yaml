@@ -1,3 +1,4 @@
+# TAHA backbone (POMO-style multi-start training)
 _target_: rl4co.models.POMO
 
 # During val/test only we apply dihedral transformations

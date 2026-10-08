@@ -45,11 +45,16 @@ class PrecomputedCache:
 
 class AttentionModelDecoder(AutoregressiveDecoder):
     """
-    Auto-regressive decoder based on Kool et al. (2019): https://arxiv.org/abs/1803.08475.
+    Constraint-modulated auto-regressive decoder (TAHA's constraint-modulated
+    decoder). Base implementation based on Kool et al. (2019):
+    https://arxiv.org/abs/1803.08475.
     Given the environment state and the embeddings, compute the logits and sample actions autoregressively until
     all the environments in the batch have reached a terminal state.
     In this case we additionally have a `pre_decoder_hook` method that allows to precompute the embeddings before
     the decoder is called, which saves a lot of computation.
+
+    The state-aware adapter (SAA) modulates the logits with a differentiable
+    energy-score bias (soft constraint modulation) instead of hard masking.
 
 
     Args:

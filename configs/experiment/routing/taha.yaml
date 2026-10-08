@@ -1,4 +1,5 @@
 # @package _global_
+# TAHA (Task-Adaptive Heterogeneous Attention) training configuration
 
 defaults:
   - override /model: pomo.yaml

@@ -15,7 +15,7 @@ defaults:
 
   # experiment configs allow for version control of specific hyperparameters
   # e.g. best hyperparameters for given model and datamodule
-  - experiment: routing/pomo.yaml # set baseline experiment
+  - experiment: routing/taha.yaml # TAHA training configuration
 
   # config for hyperparameter optimization
   - hparams_search: null
