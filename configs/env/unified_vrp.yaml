@@ -1,0 +1,9 @@
+_target_: rl4co.envs.UnifiedVRPEnv
+name: unified_vrp
+
+# Optional: load validation / test instances from a file instead of generating them.
+# Supported file formats: .txt (EVRPTW-style instance files), .npz, .evrp, .csv.
+# Leave unset to generate instances on the fly with `generator_params`
+# (see configs/experiment/routing/pomo.yaml).
+# val_file: /path/to/val_instances.txt
+# test_file: /path/to/test_instances.txt

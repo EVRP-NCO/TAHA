@@ -1,0 +1,10 @@
+_target_: rl4co.models.POMO
+
+# During val/test only we apply dihedral transformations
+num_augment: 8
+
+metrics:
+  train: ["loss", "reward"]
+  val: ["max_aug_reward","max_reward","reward"]
+  test: ["max_aug_reward","max_aug_path"]
+  log_on_step: True

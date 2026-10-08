@@ -1,0 +1,69 @@
+# @package _global_
+
+defaults:
+  - override /model: pomo.yaml
+  - override /env: unified_vrp.yaml
+  - override /callbacks: default.yaml
+  - override /trainer: default.yaml
+  - override /logger: csv.yaml  # 使用 tensorboard 或 wandb
+
+env:
+  generator_params:
+    num_loc: 15  # 客户点数量 (不包括仓库和充电站)
+    num_station: 8  # 充电站数量
+    loc_distribution: "mix_distribution"
+
+
+
+logger:
+  tensorboard:
+    name: "uenv"
+    version: null
+  
+  # wandb:
+  #   project: "rl4co"
+  #   tags: ["pomo", "pip-d", "${env.name}"]
+  #   group: "${env.name}${env.generator_params.num_loc}_pomo_pip"
+  #   name: "mixevrptw-pomo-pip-${env.generator_params.num_loc}"
+
+model:   
+  batch_size: 256
+  #num_starts: 50
+  # num_augment: 8
+  train_data_size: 1000
+  val_data_size: 100
+  test_data_size: 100
+  baseline: "topk_shared" 
+
+  # 开启多任务奖励归一化
+  multi_task_norm: True
+  multi_task_norm_params:
+    scale_type: "subtraction" # 选项: "subtraction" (减法, 推荐) 或 "division" (除法)
+    method: "ema"             # 选项: "ema" (指数移动平均, 推荐) 或 "simple" (简单平均)
+    alpha: 0.1                # EMA 的平滑因子
+
+  policy_kwargs:  # 可以传递额外的策略参数
+    collect_attention: True  # 关闭注意力权重采集
+    moe_kwargs:
+      encoder:
+        num_experts: 4
+        top_k: 2
+      decoder:
+        # num_experts: 4
+        # top_k: 2
+
+  
+
+  # 优化器配置
+  optimizer_kwargs:
+    lr: 3e-4
+    weight_decay: 1e-6
+  lr_scheduler:
+    "MultiStepLR"
+  lr_scheduler_kwargs:
+    milestones: [285, 290]
+    gamma: 0.1
+
+trainer:
+  max_epochs: 300
+seed: 1234
